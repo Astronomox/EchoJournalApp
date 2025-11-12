@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, Timestamp } from 'firebase/firestore';
 import { generateMoodInsights } from "@/ai/flows/generate-mood-insights";
@@ -8,7 +9,8 @@ import type { JournalEntry } from "@/lib/types";
 import { PageTransition } from "@/components/page-transition";
 import { MoodChart } from "@/components/mood-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BarChart3, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 
@@ -16,6 +18,7 @@ export default function InsightsPage() {
   const { user, firestore } = useFirebase();
   const [insights, setInsights] = useState<string | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
 
   const entriesQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -39,29 +42,36 @@ export default function InsightsPage() {
             date = new Date();
         }
         return { ...e, createdAt: date };
-    })
+    }).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }, [entries]);
 
-  useEffect(() => {
-    async function fetchInsights() {
-      if (!entriesWithDates || entriesWithDates.length < 2) {
-        setInsights(null);
-        return;
-      };
-      setLoadingInsights(true);
-      try {
-        const allEntriesContent = entriesWithDates.map(e => `Date: ${new Date(e.createdAt).toISOString().split('T')[0]}\n${e.content}`).join('\n\n---\n\n');
-        const moodInsightsResult = await generateMoodInsights({ journalEntries: allEntriesContent });
-        setInsights(moodInsightsResult.moodInsights);
-      } catch (error) {
-        console.error("Failed to fetch insights:", error);
-        setInsights("Could not load AI insights at this time.");
-      } finally {
-        setLoadingInsights(false);
-      }
+  const fetchInsights = useCallback(async () => {
+    if (!entriesWithDates || entriesWithDates.length < 2) {
+      setInsights(null);
+      return;
     }
-    fetchInsights();
+    setLoadingInsights(true);
+    setInsightsError(null);
+    try {
+      const allEntriesContent = entriesWithDates.map(e => `Date: ${new Date(e.createdAt).toISOString().split('T')[0]}\n${e.content}`).join('\n\n---\n\n');
+      const moodInsightsResult = await generateMoodInsights({ journalEntries: allEntriesContent });
+      setInsights(moodInsightsResult.moodInsights);
+    } catch (error: any) {
+      console.error("Failed to fetch insights:", error);
+      if (error.message && error.message.includes('503')) {
+          setInsightsError("The AI is currently busy. Please try again in a moment.");
+      } else {
+          setInsightsError("Could not load AI insights at this time.");
+      }
+      setInsights(null);
+    } finally {
+      setLoadingInsights(false);
+    }
   }, [entriesWithDates]);
+
+  useEffect(() => {
+    fetchInsights();
+  }, [fetchInsights]);
 
   const loading = loadingEntries || loadingInsights;
 
@@ -92,6 +102,14 @@ export default function InsightsPage() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-4/5" />
                 </div>
+            ) : insightsError ? (
+                <div className="text-center text-destructive">
+                    <p>{insightsError}</p>
+                    <Button variant="outline" size="sm" onClick={fetchInsights} className="mt-4">
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Retry
+                    </Button>
+                </div>
             ) : insights ? (
               <p className="text-sm text-foreground/80 whitespace-pre-wrap">{insights}</p>
             ) : (
@@ -103,3 +121,4 @@ export default function InsightsPage() {
     </PageTransition>
   );
 }
+
