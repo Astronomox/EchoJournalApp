@@ -18,10 +18,11 @@ import {
 
 export function MoodChart({ entries }: { entries: JournalEntry[] }) {
   const chartData = entries
+    .filter(entry => typeof entry.sentimentScore === 'number') // Ensure sentimentScore exists
     .slice() // Create a shallow copy to avoid mutating the original array
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) // Sort chronologically
+    .sort((a, b) => new Date(a.createdAt as any).getTime() - new Date(b.createdAt as any).getTime()) // Sort chronologically
     .map(entry => ({
-      date: new Date(entry.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric' }),
+      date: new Date(entry.createdAt as any).toLocaleString('en-US', { month: 'short', day: 'numeric' }),
       sentimentScore: entry.sentimentScore,
       mood: entry.mood
     }));
@@ -33,12 +34,12 @@ export function MoodChart({ entries }: { entries: JournalEntry[] }) {
     },
   }
 
-  if (entries.length < 2) {
+  if (chartData.length < 2) {
     return (
         <Card className="glassmorphism">
             <CardHeader>
                 <CardTitle>Mood Over Time</CardTitle>
-                <CardDescription>Not enough data to display mood chart. You need at least 2 entries.</CardDescription>
+                <CardDescription>Not enough data to display mood chart. You need at least 2 entries with sentiment scores.</CardDescription>
             </CardHeader>
         </Card>
     )
@@ -81,7 +82,7 @@ export function MoodChart({ entries }: { entries: JournalEntry[] }) {
                 <ChartTooltipContent
                   formatter={(value, name, props) => (
                     <div className="flex flex-col">
-                        <span className="font-semibold">{props.payload.mood}</span>
+                        <span className="font-semibold">{props.payload.mood || 'Neutral'}</span>
                         <span className="text-muted-foreground">Score: {(value as number).toFixed(2)}</span>
                     </div>
                   )}

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, Timestamp } from 'firebase/firestore';
+import { collection, Timestamp, orderBy, query } from 'firebase/firestore';
 import type { JournalEntry } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,20 +16,11 @@ export default function JournalPage() {
 
   const entriesQuery = useMemoFirebase(() => {
     if (!user) return null;
-    // We can add orderBy here
-    return collection(firestore, 'users', user.uid, 'journalEntries');
+    const entriesCol = collection(firestore, 'users', user.uid, 'journalEntries');
+    return query(entriesCol, orderBy("createdAt", "desc"));
   }, [user, firestore]);
 
   const { data: entries, isLoading: loading } = useCollection<JournalEntry>(entriesQuery);
-
-  const sortedEntries = useMemo(() => {
-    if (!entries) return [];
-    return [...entries].sort((a, b) => {
-        const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
-        const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
-        return dateB.getTime() - dateA.getTime();
-    });
-  }, [entries]);
 
   const formatDate = (dateValue: Date | Timestamp | { seconds: number, nanoseconds: number }) => {
     if (dateValue instanceof Timestamp) {
@@ -38,7 +29,8 @@ export default function JournalPage() {
     if (dateValue && typeof dateValue === 'object' && 'seconds' in dateValue) {
         return new Timestamp(dateValue.seconds, dateValue.nanoseconds).toDate();
     }
-    return new Date(dateValue as Date);
+    // This will handle both native Date objects and date strings
+    return new Date(dateValue as any);
   }
 
   return (
@@ -69,14 +61,14 @@ export default function JournalPage() {
           </Card>
         ))}
 
-        {!loading && (!sortedEntries || sortedEntries.length === 0) && (
+        {!loading && (!entries || entries.length === 0) && (
           <div className="col-span-full text-center py-16">
             <h2 className="text-2xl font-semibold">Your journal is empty</h2>
             <p className="text-muted-foreground mt-2">Start writing to see your entries here.</p>
           </div>
         )}
         
-        {!loading && sortedEntries && sortedEntries.map((entry) => {
+        {!loading && entries && entries.map((entry) => {
             const entryDate = formatDate(entry.createdAt);
             return (
               <Card key={entry.id} className="glassmorphism hover:bg-card/80 transition-colors cursor-pointer">

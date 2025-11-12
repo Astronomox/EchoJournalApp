@@ -8,6 +8,7 @@ import { JournalEditor } from "@/components/journal-editor";
 import { PageTransition } from "@/components/page-transition";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeEntrySentiment } from "@/ai/flows/analyze-entry-sentiment";
+import type { JournalEntry } from "@/lib/types";
 
 export default function NewJournalEntryPage() {
   const { user, firestore } = useFirebase();
@@ -25,18 +26,35 @@ export default function NewJournalEntryPage() {
       return;
     }
     setIsSubmitting(true);
+
+    let mood: string | undefined;
+    let sentimentScore: number | undefined;
+
     try {
       const sentimentResult = await analyzeEntrySentiment({ journalEntry: content });
-      const mood = sentimentResult.sentiment.charAt(0).toUpperCase() + sentimentResult.sentiment.slice(1);
-      
-      const entriesCol = collection(firestore, 'users', user.uid, 'journalEntries');
-      await addDoc(entriesCol, {
-        content,
-        mood,
-        sentimentScore: sentimentResult.score,
-        createdAt: serverTimestamp(),
-        userId: user.uid,
+      mood = sentimentResult.sentiment.charAt(0).toUpperCase() + sentimentResult.sentiment.slice(1);
+      sentimentScore = sentimentResult.score;
+    } catch (aiError) {
+      console.warn("AI sentiment analysis failed, but saving entry anyway:", aiError);
+      toast({
+        title: "AI Analysis Skipped",
+        description: "Could not get AI mood analysis, but your entry will be saved without it.",
       });
+    }
+
+    try {
+      const entriesCol = collection(firestore, 'users', user.uid, 'journalEntries');
+      
+      const newEntry: Omit<JournalEntry, 'id' | 'createdAt'> = {
+        content,
+        userId: user.uid,
+        createdAt: serverTimestamp() as any, // Let server generate timestamp
+      };
+
+      if (mood) newEntry.mood = mood;
+      if (sentimentScore !== undefined) newEntry.sentimentScore = sentimentScore;
+
+      await addDoc(entriesCol, newEntry);
       
       toast({
         title: "Entry Saved",
@@ -50,7 +68,8 @@ export default function NewJournalEntryPage() {
         title: "Error",
         description: "Could not save your journal entry. Please try again.",
       });
-      setIsSubmitting(false);
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
