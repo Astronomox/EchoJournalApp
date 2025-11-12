@@ -1,6 +1,6 @@
 "use client"
 
-import { Line, LineChart, CartesianGrid, XAxis, Tooltip } from "recharts"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts"
 import type { JournalEntry } from "@/lib/types"
 
 import {
@@ -16,53 +16,18 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
-const moodToValue = (mood: string) => {
-    switch(mood?.toLowerCase()){
-        case 'happy':
-        case 'joyful':
-        case 'excited':
-            return 5;
-        case 'content':
-        case 'grateful':
-            return 4;
-        case 'neutral':
-        case 'calm':
-            return 3;
-        case 'sad':
-        case 'anxious':
-        case 'stressed':
-            return 2;
-        case 'angry':
-        case 'frustrated':
-        case 'tired':
-            return 1;
-        default: return 3; // Default to neutral
-    }
-}
-
-const valueToMood = (value: number) => {
-    switch(value) {
-        case 5: return 'Very Positive';
-        case 4: return 'Positive';
-        case 3: return 'Neutral';
-        case 2: return 'Negative';
-        case 1: return 'Very Negative';
-        default: return 'Unknown';
-    }
-}
-
 export function MoodChart({ entries }: { entries: JournalEntry[] }) {
   const chartData = entries
     .map(entry => ({
       date: new Date(entry.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      moodValue: moodToValue(entry.mood || 'neutral'),
+      sentimentScore: entry.sentimentScore,
       mood: entry.mood
     }))
     .reverse();
 
   const chartConfig = {
-    mood: {
-      label: "Mood",
+    sentiment: {
+      label: "Sentiment",
       color: "hsl(var(--primary))",
     },
   }
@@ -91,7 +56,7 @@ export function MoodChart({ entries }: { entries: JournalEntry[] }) {
             margin={{
               top: 5,
               right: 10,
-              left: 10,
+              left: -20,
               bottom: 5,
             }}
           >
@@ -102,25 +67,34 @@ export function MoodChart({ entries }: { entries: JournalEntry[] }) {
               axisLine={false}
               tickMargin={8}
             />
+            <YAxis
+                domain={[-1, 1]}
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+            />
             <Tooltip
               cursor={false}
               content={
                 <ChartTooltipContent
-                  formatter={(value, name, props) => {
-                      return `${props.payload.mood} (${valueToMood(value as number)})`;
-                  }}
+                  formatter={(value, name, props) => (
+                    <div className="flex flex-col">
+                        <span className="font-semibold">{props.payload.mood}</span>
+                        <span className="text-muted-foreground">Score: {(value as number).toFixed(2)}</span>
+                    </div>
+                  )}
                   indicator="dot"
                 />
               }
             />
             <Line
-              dataKey="moodValue"
+              dataKey="sentimentScore"
               type="monotone"
-              stroke="var(--color-mood)"
+              stroke="var(--color-sentiment)"
               strokeWidth={2}
-              name="Mood"
+              name="Sentiment"
               dot={{
-                fill: "var(--color-mood)",
+                fill: "var(--color-sentiment)",
               }}
               activeDot={{
                 r: 6,
