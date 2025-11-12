@@ -1,0 +1,170 @@
+/**
+ * @fileoverview Firestore Security Rules for EchoJournal.
+ *
+ * Core Philosophy: This ruleset enforces a strict user-ownership model. Each user
+ * has complete control over their data (profile, journal entries, thematic connections,
+ * and Duolingo streaks).  Data is organized under the /users/{userId} path to
+ * simplify authorization and eliminate the need for complex queries in the rules.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile information. 'userId' must match the
+ *   Firebase Authentication UID.
+ * - /users/{userId}/journalEntries/{journalEntryId}: Stores journal entries
+ *   created by the user. 'userId' in the path must match the entry's userId.
+ * - /users/{userId}/thematicConnections/{thematicConnectionId}: Stores thematic
+ *   connections between journal entries. 'userId' must match the connection's userId.
+ * - /users/{userId}/duolingoStreaks/{duolingoStreakId}: Stores Duolingo streak
+ *   data. 'userId' must match the streak record's userId.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own data. No cross-user access is allowed.
+ * - Listing of users is disallowed. Only the authenticated user can read their
+ *   own profile.
+ * - All write operations require the user to be authenticated.
+ * - Data validation is minimized to allow for rapid prototyping. Only
+ *   authorization-critical fields are validated.
+ *
+ * Denormalization for Authorization:
+ * - The 'userId' is embedded in the path for all user-owned documents, eliminating
+ *   the need for 'get()' calls to determine ownership.  This greatly improves
+ *   rule performance and prevents race conditions.
+ *
+ * Structural Segregation:
+ * - User data is structurally segregated under the /users/{userId} path.  This
+ *   ensures that rules can be applied consistently across all user-owned data
+ *   without the need for complex conditions based on data content.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user profiles.
+     * @path /users/{userId}
+     * @allow (create) - Authenticated user can create their profile if the userId matches their auth UID.
+     * @allow (get) - Authenticated user can read their own profile.
+     * @allow (update) - Authenticated user can update their own profile.
+     * @allow (delete) - Authenticated user can delete their own profile.
+     * @deny (list) - Listing all users is not allowed.
+     * @deny (create) - Creation is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @deny (update) - Update is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @deny (delete) - Delete is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to journal entries for a specific user.
+     * @path /users/{userId}/journalEntries/{journalEntryId}
+     * @allow (create) - Authenticated user can create a journal entry under their userId.
+     * @allow (get) - Authenticated user can read their own journal entry.
+     * @allow (update) - Authenticated user can update their own journal entry.
+     * @allow (delete) - Authenticated user can delete their own journal entry.
+     * @deny (create) - Creation is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @deny (update) - Update is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @deny (delete) - Delete is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @principle Enforces document ownership for writes, restricts listing to the owner.
+     */
+    match /users/{userId}/journalEntries/{journalEntryId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to thematic connections for a specific user.
+     * @path /users/{userId}/thematicConnections/{thematicConnectionId}
+     * @allow (create) - Authenticated user can create a thematic connection under their userId.
+     * @allow (get) - Authenticated user can read their own thematic connection.
+     * @allow (update) - Authenticated user can update their own thematic connection.
+     * @allow (delete) - Authenticated user can delete their own thematic connection.
+     * @deny (create) - Creation is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @deny (update) - Update is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @deny (delete) - Delete is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @principle Enforces document ownership for writes, restricts listing to the owner.
+     */
+    match /users/{userId}/thematicConnections/{thematicConnectionId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to Duolingo streaks for a specific user.
+     * @path /users/{userId}/duolingoStreaks/{duolingoStreakId}
+     * @allow (create) - Authenticated user can create a Duolingo streak under their userId.
+     * @allow (get) - Authenticated user can read their own Duolingo streak.
+     * @allow (update) - Authenticated user can update their own Duolingo streak.
+     * @allow (delete) - Authenticated user can delete their own Duolingo streak.
+     * @deny (create) - Creation is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @deny (update) - Update is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @deny (delete) - Delete is denied if the user is not authenticated or the userId does not match their auth UID.
+     * @principle Enforces document ownership for writes, restricts listing to the owner.
+     */
+    match /users/{userId}/duolingoStreaks/{duolingoStreakId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
