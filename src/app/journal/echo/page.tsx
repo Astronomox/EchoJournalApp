@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/firebase";
+import { useFirebase } from "@/firebase";
 import { getJournalEntries } from "@/lib/actions";
 import { identifyThematicConnections } from "@/ai/flows/identify-thematic-connections";
 import { PageTransition } from "@/components/page-transition";
@@ -11,7 +11,7 @@ import { BotMessageSquare, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EchoPage() {
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const [themes, setThemes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

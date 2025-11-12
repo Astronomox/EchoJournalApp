@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/firebase";
+import { useFirebase } from "@/firebase";
 import { getDuolingoGrades, addDuolingoGrade } from "@/lib/actions";
 import type { DuolingoGrade } from "@/lib/types";
 import { PageTransition } from "@/components/page-transition";
@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {isSameDay} from 'date-fns'
 
 export default function StreakPage() {
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const { toast } = useToast();
   const [grades, setGrades] = useState<DuolingoGrade[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/lib/firebase";
+import { useAuth, useFirebase, initiateEmailSignUp, initiateEmailSignIn } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -14,6 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTransition } from "@/components/page-transition";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { signInWithPopup, GoogleAuthProvider, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 const signInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -31,7 +33,7 @@ type SignUpValues = z.infer<typeof signUpSchema>;
 
 
 export default function LoginPage() {
-  const { user, loading, signInWithGoogle, emailSignIn, emailSignUp } = useAuth();
+  const { user, isUserLoading, auth, firestore } = useFirebase();
   const router = useRouter();
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("signin");
@@ -45,10 +47,10 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!isUserLoading && user) {
       router.push("/journal");
     }
-  }, [user, loading, router]);
+  }, [user, isUserLoading, router]);
   
   const handleTabChange = (value: string) => {
     setAuthError(null);
@@ -58,8 +60,7 @@ export default function LoginPage() {
   const handleSignIn: SubmitHandler<SignInValues> = async (data) => {
     setAuthError(null);
     try {
-        await emailSignIn(data.email, data.password);
-        router.push("/journal");
+        initiateEmailSignIn(auth, data.email, data.password);
     } catch (error: any) {
         handleAuthError(error);
     }
@@ -68,8 +69,20 @@ export default function LoginPage() {
   const handleSignUp: SubmitHandler<SignUpValues> = async (data) => {
     setAuthError(null);
     try {
-        await emailSignUp(data.nickname, data.email, data.password);
-        router.push("/journal");
+      // We handle user creation manually here to also create the user doc
+      const userCredential = await auth.createUserWithEmailAndPassword(auth, data.email, data.password);
+      const newUser = userCredential.user;
+      if (newUser) {
+          await updateProfile(newUser, { displayName: data.nickname });
+          const userDocRef = doc(firestore, "users", newUser.uid);
+          await setDoc(userDocRef, {
+              id: newUser.uid,
+              nickname: data.nickname,
+              email: newUser.email,
+              createdAt: new Date().toISOString(),
+          });
+      }
+      router.push("/journal");
     } catch (error: any) {
         handleAuthError(error);
     }
@@ -78,7 +91,18 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setAuthError(null);
     try {
-        await signInWithGoogle();
+        const provider = new GoogleAuthProvider();
+        const userCredential = await signInWithPopup(auth, provider);
+        const newUser = userCredential.user;
+         if (newUser) {
+            const userDocRef = doc(firestore, "users", newUser.uid);
+            await setDoc(userDocRef, {
+                id: newUser.uid,
+                nickname: newUser.displayName,
+                email: newUser.email,
+                createdAt: new Date().toISOString(),
+            }, { merge: true }); // Merge to avoid overwriting existing data
+        }
         router.push('/journal');
     } catch (error: any) {
         handleAuthError(error);
@@ -103,7 +127,7 @@ export default function LoginPage() {
   }
 
 
-  if (loading || user) {
+  if (isUserLoading || user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-muted-foreground">Loading...</div>

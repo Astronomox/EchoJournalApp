@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/firebase";
+import { useFirebase } from "@/firebase";
 import { addJournalEntry } from "@/lib/actions";
 import { JournalEditor } from "@/components/journal-editor";
 import { PageTransition } from "@/components/page-transition";
@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { analyzeEntrySentiment } from "@/ai/flows/analyze-entry-sentiment";
 
 export default function NewJournalEntryPage() {
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();

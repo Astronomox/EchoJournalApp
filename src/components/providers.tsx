@@ -2,7 +2,7 @@
 
 import type { Theme } from "@/lib/types";
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { AuthProvider } from "@/lib/firebase";
+import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { Toaster } from "@/components/ui/toaster";
 
 // Theme Context
@@ -67,11 +67,11 @@ export const useTheme = () => {
 // Main Providers Component
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
+    <FirebaseClientProvider>
       <ThemeProvider defaultTheme="light">
         {children}
         <Toaster />
       </ThemeProvider>
-    </AuthProvider>
+    </FirebaseClientProvider>
   );
 }

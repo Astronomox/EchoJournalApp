@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/firebase";
+import { useFirebase } from "@/firebase";
 import { getJournalEntries } from "@/lib/actions";
 import { generateMoodInsights } from "@/ai/flows/generate-mood-insights";
 import type { JournalEntry } from "@/lib/types";
@@ -12,7 +12,7 @@ import { BarChart3, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function InsightsPage() {
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [insights, setInsights] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

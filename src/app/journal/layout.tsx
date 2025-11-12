@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { NotebookText, BotMessageSquare, BarChart3, CalendarCheck, Settings, Log
 import { HolographicIcon } from '@/components/holographic-icon';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { signOut } from 'firebase/auth';
 
 const navItems = [
   { href: '/journal', icon: NotebookText, label: 'Journal' },
@@ -21,24 +22,33 @@ const navItems = [
 ];
 
 export default function JournalLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading, signOut } = useAuth();
+  const { user, isUserLoading, auth } = useFirebase();
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, isUserLoading, router]);
 
-  if (loading || !user) {
+  if (isUserLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-muted-foreground">Loading application...</div>
       </div>
     );
   }
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error("Error signing out", error);
+    }
+  };
 
   const getInitials = (name?: string | null) => {
     if (!name) return 'U';
@@ -120,7 +130,7 @@ export default function JournalLayout({ children }: { children: React.ReactNode 
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild><Link href="/journal/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>

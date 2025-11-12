@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getJournalEntries } from "@/lib/actions";
 import type { JournalEntry } from "@/lib/types";
-import { useAuth } from "@/lib/firebase";
+import { useFirebase } from "@/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import { PageTransition } from "@/components/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function JournalPage() {
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
