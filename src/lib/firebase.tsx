@@ -2,7 +2,7 @@
 
 import type { User } from 'firebase/auth';
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 // IMPORTANT: Replace with your actual Firebase configuration
@@ -30,7 +30,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  emailSignUp: (email:string, password:string) => Promise<any>;
+  emailSignUp: (nickname: string, email:string, password:string) => Promise<any>;
   emailSignIn: (email:string, password:string) => Promise<any>;
   signOut: () => Promise<void>;
 }
@@ -62,11 +62,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error signing in with Google", error);
+      throw error;
     }
   };
   
-  const emailSignUp = (email:string, password:string) =>{
-    return createUserWithEmailAndPassword(auth, email, password);
+  const emailSignUp = async (nickname: string, email:string, password:string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+        await updateProfile(userCredential.user, { displayName: nickname });
+    }
+    return userCredential;
   }
 
   const emailSignIn = (email:string, password:string) =>{

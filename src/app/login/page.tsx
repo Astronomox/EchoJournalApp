@@ -15,20 +15,33 @@ import { PageTransition } from "@/components/page-transition";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-const formSchema = z.object({
+const signInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+const signUpSchema = z.object({
+    nickname: z.string().min(2, { message: "Nickname must be at least 2 characters." }),
+    email: z.string().email({ message: "Please enter a valid email address." }),
+    password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+});
+
+type SignInValues = z.infer<typeof signInSchema>;
+type SignUpValues = z.infer<typeof signUpSchema>;
+
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle, emailSignIn, emailSignUp } = useAuth();
   const router = useRouter();
   const [authError, setAuthError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("signin");
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const { register: registerSignIn, handleSubmit: handleSubmitSignIn, formState: { errors: errorsSignIn } } = useForm<SignInValues>({
+    resolver: zodResolver(signInSchema),
+  });
+
+  const { register: registerSignUp, handleSubmit: handleSubmitSignUp, formState: { errors: errorsSignUp } } = useForm<SignUpValues>({
+    resolver: zodResolver(signUpSchema),
   });
 
   useEffect(() => {
@@ -36,17 +49,27 @@ export default function LoginPage() {
       router.push("/journal");
     }
   }, [user, loading, router]);
-
-  const handleEmailAuth: SubmitHandler<FormValues> = async (data, event) => {
+  
+  const handleTabChange = (value: string) => {
     setAuthError(null);
-    const isSignIn = (event?.nativeEvent as SubmitEvent).submitter?.innerText.includes("Sign In");
+    setActiveTab(value);
+  }
+
+  const handleSignIn: SubmitHandler<SignInValues> = async (data) => {
+    setAuthError(null);
     try {
-      if (isSignIn) {
         await emailSignIn(data.email, data.password);
-      } else {
-        await emailSignUp(data.email, data.password);
-      }
-      router.push("/journal");
+        router.push("/journal");
+    } catch (error: any) {
+        handleAuthError(error);
+    }
+  };
+
+  const handleSignUp: SubmitHandler<SignUpValues> = async (data) => {
+    setAuthError(null);
+    try {
+        await emailSignUp(data.nickname, data.email, data.password);
+        router.push("/journal");
     } catch (error: any) {
         handleAuthError(error);
     }
@@ -66,6 +89,7 @@ export default function LoginPage() {
     switch (error.code) {
         case 'auth/user-not-found':
         case 'auth/wrong-password':
+        case 'auth/invalid-credential':
           setAuthError('Invalid email or password. Please try again.');
           break;
         case 'auth/email-already-in-use':
@@ -73,6 +97,7 @@ export default function LoginPage() {
           break;
         default:
           setAuthError('An unexpected error occurred. Please try again.');
+          console.error(error);
           break;
       }
   }
@@ -89,7 +114,7 @@ export default function LoginPage() {
   return (
     <PageTransition>
       <div className="flex items-center justify-center min-h-screen p-4">
-        <Tabs defaultValue="signin" className="w-full max-w-sm">
+        <Tabs defaultValue="signin" className="w-full max-w-sm" onValueChange={handleTabChange} value={activeTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -102,8 +127,8 @@ export default function LoginPage() {
                 <CardDescription>Sign in to continue your journey.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit(handleEmailAuth)} className="space-y-4">
-                  {authError && (
+                <form onSubmit={handleSubmitSignIn(handleSignIn)} className="space-y-4">
+                  {authError && activeTab === 'signin' && (
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Authentication Error</AlertTitle>
@@ -112,13 +137,13 @@ export default function LoginPage() {
                   )}
                   <div className="space-y-2">
                     <Label htmlFor="email-signin">Email</Label>
-                    <Input id="email-signin" type="email" placeholder="m@example.com" {...register("email")} />
-                    {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+                    <Input id="email-signin" type="email" placeholder="m@example.com" {...registerSignIn("email")} />
+                    {errorsSignIn.email && <p className="text-sm text-destructive">{errorsSignIn.email.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password-signin">Password</Label>
-                    <Input id="password-signin" type="password" {...register("password")} />
-                    {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+                    <Input id="password-signin" type="password" {...registerSignIn("password")} />
+                    {errorsSignIn.password && <p className="text-sm text-destructive">{errorsSignIn.password.message}</p>}
                   </div>
                   <Button type="submit" className="w-full">Sign In</Button>
                   <div className="relative my-4">
@@ -140,23 +165,28 @@ export default function LoginPage() {
                 <CardDescription>Start your journey with EchoJournal today.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit(handleEmailAuth)} className="space-y-4">
-                 {authError && (
+                <form onSubmit={handleSubmitSignUp(handleSignUp)} className="space-y-4">
+                 {authError && activeTab === 'signup' && (
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Authentication Error</AlertTitle>
                       <AlertDescription>{authError}</AlertDescription>
                     </Alert>
                   )}
+                   <div className="space-y-2">
+                    <Label htmlFor="nickname-signup">Nickname</Label>
+                    <Input id="nickname-signup" type="text" placeholder="Your Nickname" {...registerSignUp("nickname")} />
+                     {errorsSignUp.nickname && <p className="text-sm text-destructive">{errorsSignUp.nickname.message}</p>}
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="email-signup">Email</Label>
-                    <Input id="email-signup" type="email" placeholder="m@example.com" {...register("email")} />
-                     {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+                    <Input id="email-signup" type="email" placeholder="m@example.com" {...registerSignUp("email")} />
+                     {errorsSignUp.email && <p className="text-sm text-destructive">{errorsSignUp.email.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password-signup">Password</Label>
-                    <Input id="password-signup" type="password" {...register("password")} />
-                    {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+                    <Input id="password-signup" type="password" {...registerSignUp("password")} />
+                    {errorsSignUp.password && <p className="text-sm text-destructive">{errorsSignUp.password.message}</p>}
                   </div>
                   <Button type="submit" className="w-full">Sign Up</Button>
                   <div className="relative my-4">
