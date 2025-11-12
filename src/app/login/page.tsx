@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth, useFirebase, initiateEmailSignUp, initiateEmailSignIn } from "@/firebase";
+import { useFirebase, initiateEmailSignUp, initiateEmailSignIn } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTransition } from "@/components/page-transition";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { signInWithPopup, GoogleAuthProvider, updateProfile } from "firebase/auth";
+import { signInWithPopup, GoogleAuthProvider, updateProfile, createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
 const signInSchema = z.object({
@@ -70,7 +70,7 @@ export default function LoginPage() {
     setAuthError(null);
     try {
       // We handle user creation manually here to also create the user doc
-      const userCredential = await auth.createUserWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const newUser = userCredential.user;
       if (newUser) {
           await updateProfile(newUser, { displayName: data.nickname });
