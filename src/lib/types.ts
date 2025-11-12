@@ -3,6 +3,7 @@ export type JournalEntry = {
   createdAt: Date;
   content: string;
   mood?: 'Positive' | 'Negative' | 'Neutral' | string;
+  sentimentScore: number;
 };
 
 export type DuolingoGrade = {

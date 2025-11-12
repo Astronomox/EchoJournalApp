@@ -28,7 +28,8 @@ export default function NewJournalEntryPage() {
     try {
       const sentimentResult = await analyzeEntrySentiment({ journalEntry: content });
       const mood = sentimentResult.sentiment.charAt(0).toUpperCase() + sentimentResult.sentiment.slice(1);
-      await addJournalEntry(user.uid, content, mood);
+      
+      await addJournalEntry(user.uid, content, mood, sentimentResult.score);
       
       toast({
         title: "Entry Saved",
@@ -36,6 +37,7 @@ export default function NewJournalEntryPage() {
       });
       router.push("/journal");
     } catch (error) {
+      console.error("Failed to save journal entry:", error);
       toast({
         variant: "destructive",
         title: "Error",

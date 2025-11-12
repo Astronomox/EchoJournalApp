@@ -20,15 +20,17 @@ export async function getJournalEntries(userId: string): Promise<JournalEntry[]>
       content: data.content,
       createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
       mood: data.mood,
+      sentimentScore: data.sentimentScore,
     };
   });
 }
 
-export async function addJournalEntry(userId: string, content: string, mood: string): Promise<JournalEntry> {
+export async function addJournalEntry(userId: string, content: string, mood: string, sentimentScore: number): Promise<JournalEntry> {
     const entriesCol = adminDb.collection('users').doc(userId).collection('journalEntries');
     const newDocRef = await entriesCol.add({
         content,
         mood,
+        sentimentScore,
         createdAt: FieldValue.serverTimestamp(),
         userId,
     });
@@ -37,6 +39,7 @@ export async function addJournalEntry(userId: string, content: string, mood: str
         id: newDocRef.id,
         content,
         mood,
+        sentimentScore,
         createdAt: new Date(),
     };
 }
