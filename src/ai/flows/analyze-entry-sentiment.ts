@@ -18,8 +18,8 @@ const AnalyzeEntrySentimentInputSchema = z.object({
 export type AnalyzeEntrySentimentInput = z.infer<typeof AnalyzeEntrySentimentInputSchema>;
 
 const AnalyzeEntrySentimentOutputSchema = z.object({
-  sentiment: z.string().describe('The sentiment of the journal entry.'),
-  score: z.number().describe('A numerical score indicating the sentiment strength.'),
+  sentiment: z.string().describe('A single, descriptive word for the primary emotion of the journal entry (e.g., Happy, Sad, Angry, Hopeful, Tired, Anxious, Grateful).'),
+  score: z.number().describe('A numerical score from -1.0 to 1.0, where -1.0 is very negative, 0 is neutral, and 1.0 is very positive.'),
 });
 export type AnalyzeEntrySentimentOutput = z.infer<typeof AnalyzeEntrySentimentOutputSchema>;
 
@@ -31,7 +31,7 @@ const prompt = ai.definePrompt({
   name: 'analyzeEntrySentimentPrompt',
   input: {schema: AnalyzeEntrySentimentInputSchema},
   output: {schema: AnalyzeEntrySentimentOutputSchema},
-  prompt: `Analyze the sentiment of the following journal entry. Provide both the sentiment (positive, negative, or neutral) and a numerical score from -1 to 1, where -1 is very negative, 0 is neutral, and 1 is very positive:\n\n{{{journalEntry}}}`,
+  prompt: `Analyze the sentiment of the following journal entry. Provide a single, descriptive word for the primary emotion (e.g., Happy, Sad, Angry, Hopeful, Tired, Anxious, Grateful). Also, provide a numerical score from -1.0 to 1.0, where -1.0 is very negative, 0 is neutral, and 1.0 is very positive:\n\n{{{journalEntry}}}`,
 });
 
 const analyzeEntrySentimentFlow = ai.defineFlow(

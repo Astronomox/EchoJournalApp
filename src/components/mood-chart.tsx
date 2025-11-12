@@ -17,11 +17,37 @@ import {
 } from "@/components/ui/chart"
 
 const moodToValue = (mood: string) => {
-    switch(mood.toLowerCase()){
-        case 'positive': return 3;
-        case 'neutral': return 2;
-        case 'negative': return 1;
-        default: return 0;
+    switch(mood?.toLowerCase()){
+        case 'happy':
+        case 'joyful':
+        case 'excited':
+            return 5;
+        case 'content':
+        case 'grateful':
+            return 4;
+        case 'neutral':
+        case 'calm':
+            return 3;
+        case 'sad':
+        case 'anxious':
+        case 'stressed':
+            return 2;
+        case 'angry':
+        case 'frustrated':
+        case 'tired':
+            return 1;
+        default: return 3; // Default to neutral
+    }
+}
+
+const valueToMood = (value: number) => {
+    switch(value) {
+        case 5: return 'Very Positive';
+        case 4: return 'Positive';
+        case 3: return 'Neutral';
+        case 2: return 'Negative';
+        case 1: return 'Very Negative';
+        default: return 'Unknown';
     }
 }
 
@@ -29,7 +55,8 @@ export function MoodChart({ entries }: { entries: JournalEntry[] }) {
   const chartData = entries
     .map(entry => ({
       date: new Date(entry.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      mood: moodToValue(entry.mood || 'neutral'),
+      moodValue: moodToValue(entry.mood || 'neutral'),
+      mood: entry.mood
     }))
     .reverse();
 
@@ -79,19 +106,19 @@ export function MoodChart({ entries }: { entries: JournalEntry[] }) {
               cursor={false}
               content={
                 <ChartTooltipContent
-                  formatter={(value) => {
-                      const moodMap = { 3: 'Positive', 2: 'Neutral', 1: 'Negative' };
-                      return moodMap[value as keyof typeof moodMap] || 'Unknown';
+                  formatter={(value, name, props) => {
+                      return `${props.payload.mood} (${valueToMood(value as number)})`;
                   }}
                   indicator="dot"
                 />
               }
             />
             <Line
-              dataKey="mood"
+              dataKey="moodValue"
               type="monotone"
               stroke="var(--color-mood)"
               strokeWidth={2}
+              name="Mood"
               dot={{
                 fill: "var(--color-mood)",
               }}

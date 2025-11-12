@@ -2,7 +2,7 @@ export type JournalEntry = {
   id: string;
   createdAt: Date;
   content: string;
-  mood?: 'Positive' | 'Negative' | 'Neutral' | string;
+  mood?: string;
   sentimentScore: number;
 };
 

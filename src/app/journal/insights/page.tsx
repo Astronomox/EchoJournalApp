@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
-import { collection } from 'firebase/firestore';
+import { collection, Timestamp } from 'firebase/firestore';
 import { generateMoodInsights } from "@/ai/flows/generate-mood-insights";
 import type { JournalEntry } from "@/lib/types";
 import { PageTransition } from "@/components/page-transition";
@@ -24,15 +24,31 @@ export default function InsightsPage() {
 
   const { data: entries, isLoading: loadingEntries } = useCollection<JournalEntry>(entriesQuery);
 
+  const entriesWithDates = useMemo(() => {
+    if (!entries) return [];
+    return entries.map(e => {
+        let date;
+        if (e.createdAt instanceof Timestamp) {
+            date = e.createdAt.toDate();
+        } else if (e.createdAt && typeof e.createdAt === 'object' && 'seconds' in e.createdAt) {
+            date = new Timestamp((e.createdAt as any).seconds, (e.createdAt as any).nanoseconds).toDate();
+        }
+        else {
+            date = new Date(e.createdAt as any);
+        }
+        return { ...e, createdAt: date };
+    })
+  }, [entries]);
+
   useEffect(() => {
     async function fetchInsights() {
-      if (!entries || entries.length < 2) {
+      if (!entriesWithDates || entriesWithDates.length < 2) {
         setInsights(null);
         return;
       };
       setLoadingInsights(true);
       try {
-        const allEntriesContent = entries.map(e => `Date: ${new Date(e.createdAt).toISOString().split('T')[0]}\n${e.content}`).join('\n\n---\n\n');
+        const allEntriesContent = entriesWithDates.map(e => `Date: ${new Date(e.createdAt).toISOString().split('T')[0]}\n${e.content}`).join('\n\n---\n\n');
         const moodInsightsResult = await generateMoodInsights({ journalEntries: allEntriesContent });
         setInsights(moodInsightsResult.moodInsights);
       } catch (error) {
@@ -43,7 +59,7 @@ export default function InsightsPage() {
       }
     }
     fetchInsights();
-  }, [entries]);
+  }, [entriesWithDates]);
 
   const loading = loadingEntries || loadingInsights;
 
@@ -57,7 +73,7 @@ export default function InsightsPage() {
       </div>
       <div className="grid gap-6 mt-4 md:grid-cols-2">
         <div className="md:col-span-2">
-          {loadingEntries ? <Skeleton className="h-[350px] w-full" /> : <MoodChart entries={entries || []} />}
+          {loadingEntries ? <Skeleton className="h-[350px] w-full" /> : <MoodChart entries={entriesWithDates || []} />}
         </div>
         
         <Card className="md:col-span-2 glassmorphism">
