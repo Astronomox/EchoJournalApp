@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTransition } from "@/components/page-transition";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { signInWithPopup, GoogleAuthProvider, updateProfile, createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
@@ -31,12 +31,23 @@ const signUpSchema = z.object({
 type SignInValues = z.infer<typeof signInSchema>;
 type SignUpValues = z.infer<typeof signUpSchema>;
 
+const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg role="img" viewBox="0 0 24 24" {...props}>
+        <path
+        fill="currentColor"
+        d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.3 1.62-3.9 1.62-3.03 0-5.49-2.3-5.49-5.09s2.46-5.09 5.49-5.09c1.3 0 2.23.51 3.03 1.25l2.19-2.19C18.01 3.99 15.47 3 12.48 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c4.97 0 9-4.03 9-9 0-.61-.05-1.22-.16-1.84h-8.84z"
+        />
+    </svg>
+);
+
 
 export default function LoginPage() {
   const { user, isUserLoading, auth, firestore } = useFirebase();
   const router = useRouter();
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("signin");
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
 
   const { register: registerSignIn, handleSubmit: handleSubmitSignIn, formState: { errors: errorsSignIn } } = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
@@ -166,7 +177,18 @@ export default function LoginPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password-signin">Password</Label>
-                    <Input id="password-signin" type="password" {...registerSignIn("password")} />
+                    <div className="relative">
+                      <Input id="password-signin" type={showSignInPassword ? 'text' : 'password'} {...registerSignIn("password")} />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                        onClick={() => setShowSignInPassword(prev => !prev)}
+                      >
+                        {showSignInPassword ? <EyeOff /> : <Eye />}
+                      </Button>
+                    </div>
                     {errorsSignIn.password && <p className="text-sm text-destructive">{errorsSignIn.password.message}</p>}
                   </div>
                   <Button type="submit" className="w-full">Sign In</Button>
@@ -175,6 +197,7 @@ export default function LoginPage() {
                     <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or continue with</span></div>
                   </div>
                   <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
+                    <GoogleIcon className="mr-2 h-4 w-4" />
                     Sign in with Google
                   </Button>
                 </form>
@@ -209,7 +232,18 @@ export default function LoginPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password-signup">Password</Label>
-                    <Input id="password-signup" type="password" {...registerSignUp("password")} />
+                    <div className="relative">
+                      <Input id="password-signup" type={showSignUpPassword ? 'text' : 'password'} {...registerSignUp("password")} />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                        onClick={() => setShowSignUpPassword(prev => !prev)}
+                      >
+                        {showSignUpPassword ? <EyeOff /> : <Eye />}
+                      </Button>
+                    </div>
                     {errorsSignUp.password && <p className="text-sm text-destructive">{errorsSignUp.password.message}</p>}
                   </div>
                   <Button type="submit" className="w-full">Sign Up</Button>
@@ -218,6 +252,7 @@ export default function LoginPage() {
                     <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or continue with</span></div>
                   </div>
                   <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
+                    <GoogleIcon className="mr-2 h-4 w-4" />
                     Sign up with Google
                   </Button>
                 </form>
