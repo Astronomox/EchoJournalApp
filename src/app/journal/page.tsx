@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
-import { collection } from 'firebase/firestore';
+import { collection, Timestamp } from 'firebase/firestore';
 import type { JournalEntry } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ export default function JournalPage() {
 
   const entriesQuery = useMemoFirebase(() => {
     if (!user) return null;
+    // We can add orderBy here
     return collection(firestore, 'users', user.uid, 'journalEntries');
   }, [user, firestore]);
 
@@ -23,9 +24,22 @@ export default function JournalPage() {
 
   const sortedEntries = useMemo(() => {
     if (!entries) return [];
-    // The useCollection hook doesn't sort, so we sort here
-    return [...entries].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return [...entries].sort((a, b) => {
+        const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
+        const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
+        return dateB.getTime() - dateA.getTime();
+    });
   }, [entries]);
+
+  const formatDate = (dateValue: Date | Timestamp | { seconds: number, nanoseconds: number }) => {
+    if (dateValue instanceof Timestamp) {
+        return dateValue.toDate();
+    }
+    if (dateValue && typeof dateValue === 'object' && 'seconds' in dateValue) {
+        return new Timestamp(dateValue.seconds, dateValue.nanoseconds).toDate();
+    }
+    return new Date(dateValue as Date);
+  }
 
   return (
     <PageTransition>
@@ -62,20 +76,23 @@ export default function JournalPage() {
           </div>
         )}
         
-        {!loading && sortedEntries && sortedEntries.map((entry) => (
-          <Card key={entry.id} className="glassmorphism hover:bg-card/80 transition-colors cursor-pointer">
-            <CardHeader>
-              <CardTitle className="text-lg">{new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(entry.createdAt))}</CardTitle>
-              <CardDescription>{new Intl.DateTimeFormat('en-US', { timeStyle: 'short' }).format(new Date(entry.createdAt))}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="line-clamp-4 text-sm text-foreground/80">{entry.content}</p>
-            </CardContent>
-            {entry.mood && <CardFooter>
-              <span className="text-xs text-muted-foreground">Mood: {entry.mood}</span>
-            </CardFooter>}
-          </Card>
-        ))}
+        {!loading && sortedEntries && sortedEntries.map((entry) => {
+            const entryDate = formatDate(entry.createdAt);
+            return (
+              <Card key={entry.id} className="glassmorphism hover:bg-card/80 transition-colors cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="text-lg">{new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(entryDate)}</CardTitle>
+                  <CardDescription>{new Intl.DateTimeFormat('en-US', { timeStyle: 'short' }).format(entryDate)}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="line-clamp-4 text-sm text-foreground/80">{entry.content}</p>
+                </CardContent>
+                {entry.mood && <CardFooter>
+                  <span className="text-xs text-muted-foreground">Mood: {entry.mood}</span>
+                </CardFooter>}
+              </Card>
+            )
+        })}
       </div>
     </PageTransition>
   );

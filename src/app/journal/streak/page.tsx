@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
-import { collection } from 'firebase/firestore';
+import { collection, Timestamp } from 'firebase/firestore';
 import type { JournalEntry } from "@/lib/types";
 import { PageTransition } from "@/components/page-transition";
 import { StreakCalendar } from "@/components/streak-calendar";
@@ -18,7 +18,23 @@ export default function StreakPage() {
   }, [user, firestore]);
 
   const { data: entries, isLoading: loading } = useCollection<JournalEntry>(entriesQuery);
-  const entriesWithDates = useMemo(() => entries?.map(e => ({ ...e, createdAt: new Date(e.createdAt) })) || [], [entries]);
+  
+  const entriesWithDates = useMemo(() => {
+    if (!entries) return [];
+    return entries.map(e => {
+        let date;
+        if (e.createdAt instanceof Timestamp) {
+            date = e.createdAt.toDate();
+        } else if (e.createdAt && typeof e.createdAt === 'object' && 'seconds' in e.createdAt) {
+            // Handle case where it might be a plain object after serialization
+            date = new Timestamp((e.createdAt as any).seconds, (e.createdAt as any).nanoseconds).toDate();
+        }
+        else {
+            date = new Date(e.createdAt as any);
+        }
+        return { ...e, createdAt: date };
+    })
+  }, [entries]);
 
   return (
     <PageTransition>

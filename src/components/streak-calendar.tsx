@@ -5,11 +5,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Flame, Star } from "lucide-react";
 import { differenceInCalendarDays, subDays, isSameDay } from 'date-fns';
+import { Timestamp } from "firebase/firestore";
 
 const calculateStreaks = (entries: { date: Date }[]): { currentStreak: number, longestStreak: number } => {
     if (entries.length === 0) return { currentStreak: 0, longestStreak: 0 };
     
-    const sortedDates = entries.map(e => e.date).sort((a, b) => b.getTime() - a.getTime());
+    const uniqueDays = [...new Set(entries.map(e => e.date.toISOString().split('T')[0]))];
+    const sortedDates = uniqueDays.map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
+    
+    if (sortedDates.length === 0) return { currentStreak: 0, longestStreak: 0 };
     
     let currentStreak = 0;
     let longestStreak = 0;
@@ -17,7 +21,6 @@ const calculateStreaks = (entries: { date: Date }[]): { currentStreak: number, l
     const today = new Date();
     const yesterday = subDays(today, 1);
     
-    // Check if the most recent entry is today or yesterday to start the current streak count
     if (isSameDay(sortedDates[0], today) || isSameDay(sortedDates[0], yesterday)) {
         currentStreak = 1;
         
@@ -26,7 +29,6 @@ const calculateStreaks = (entries: { date: Date }[]): { currentStreak: number, l
             if (diff === 1) {
                 currentStreak++;
             } else if (diff > 1) {
-                // The streak is broken
                 break;
             }
         }
@@ -40,7 +42,6 @@ const calculateStreaks = (entries: { date: Date }[]): { currentStreak: number, l
              if (diff === 1) {
                 tempCurrentStreak++;
              } else if (diff > 1) {
-                // Streak broken, reset
                 tempCurrentStreak = 1;
              }
              if (tempCurrentStreak > longestStreak) {
@@ -49,13 +50,16 @@ const calculateStreaks = (entries: { date: Date }[]): { currentStreak: number, l
         }
     }
 
-
     return { currentStreak, longestStreak };
 };
 
 export function StreakCalendar({ entries }: { entries: JournalEntry[]; }) {
   
-  const entryDates = entries.map(e => ({ date: new Date(e.createdAt) }));
+  const entryDates = entries.map(e => {
+    const date = e.createdAt instanceof Timestamp ? e.createdAt.toDate() : new Date(e.createdAt);
+    return { date };
+  });
+  
   const { currentStreak, longestStreak } = calculateStreaks(entryDates);
 
   const modifiers = {
