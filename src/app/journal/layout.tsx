@@ -16,10 +16,13 @@ import { signOut } from 'firebase/auth';
 const navItems = [
   { href: '/journal', icon: NotebookText, label: 'Journal' },
   { href: '/journal/echo', icon: BotMessageSquare, label: 'Echo' },
-  { href: '/journal/new', icon: Plus, label: 'New', isCentral: true },
   { href: '/journal/insights', icon: BarChart3, label: 'Insights' },
   { href: '/journal/streak', icon: CalendarCheck, label: 'Streak' },
+  { href: '/journal/settings', icon: Settings, label: 'Settings' },
 ];
+
+const newEntryItem = { href: '/journal/new', icon: Plus, label: 'New', isCentral: true };
+
 
 export default function JournalLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading, auth } = useFirebase();
@@ -57,7 +60,7 @@ export default function JournalLayout({ children }: { children: React.ReactNode 
 
   const NavContent = () => (
     <nav className="flex flex-col gap-2 p-4">
-      {navItems.filter(item => !item.isCentral).map((item) => (
+      {navItems.map((item) => (
         <Button
           key={item.href}
           variant={pathname === item.href ? 'secondary' : 'ghost'}
@@ -143,27 +146,17 @@ export default function JournalLayout({ children }: { children: React.ReactNode 
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-sm border-t flex items-center justify-around z-10">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link key={item.href} href={item.href} className={cn(
+      {/* Mobile Floating Action Button */}
+      <div className="md:hidden fixed bottom-4 right-4 z-10">
+        <Link href={newEntryItem.href}>
+          <div className={cn(
               "flex flex-col items-center justify-center text-muted-foreground w-full h-full",
-              isActive && "text-primary",
-              item.isCentral && "-mt-8"
-            )}>
-              <div className={cn(
-                  "p-3 rounded-full transition-all duration-300",
-                  item.isCentral && "bg-primary text-primary-foreground shadow-lg scale-125"
-              )}>
-                <HolographicIcon icon={item.icon} className={cn("w-6 h-6", isActive && !item.isCentral ? "holographic-icon": "")} />
-              </div>
-              {!item.isCentral && <span className="text-xs mt-1">{item.label}</span>}
-              <span className="sr-only">{item.label}</span>
-            </Link>
-          );
-        })}
+              "p-4 rounded-full transition-all duration-300 shadow-lg bg-primary text-primary-foreground"
+          )}>
+            <HolographicIcon icon={newEntryItem.icon} className="w-8 h-8" />
+          </div>
+          <span className="sr-only">{newEntryItem.label}</span>
+        </Link>
       </div>
     </div>
   );

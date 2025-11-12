@@ -33,8 +33,10 @@ export default function InsightsPage() {
         } else if (e.createdAt && typeof e.createdAt === 'object' && 'seconds' in e.createdAt) {
             date = new Timestamp((e.createdAt as any).seconds, (e.createdAt as any).nanoseconds).toDate();
         }
-        else {
+        else if(e.createdAt) {
             date = new Date(e.createdAt as any);
+        } else {
+            date = new Date();
         }
         return { ...e, createdAt: date };
     })
@@ -71,12 +73,12 @@ export default function InsightsPage() {
           Mood Insights
         </h1>
       </div>
-      <div className="grid gap-6 mt-4 md:grid-cols-2">
-        <div className="md:col-span-2">
+      <div className="grid gap-6 mt-4 md:grid-cols-1 lg:grid-cols-2">
+        <div className="lg:col-span-2">
           {loadingEntries ? <Skeleton className="h-[350px] w-full" /> : <MoodChart entries={entriesWithDates || []} />}
         </div>
         
-        <Card className="md:col-span-2 glassmorphism">
+        <Card className="lg:col-span-2 glassmorphism">
           <CardHeader>
             <CardTitle>AI-Powered Summary</CardTitle>
             <CardDescription>

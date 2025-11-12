@@ -93,7 +93,12 @@ export function StreakCalendar({ entries }: { entries: JournalEntry[]; }) {
             <Flame className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currentStreak} days</div>
+            <div className="text-2xl font-bold flex items-center">
+                {currentStreak > 0 ? (
+                    <Flame className="mr-2 h-6 w-6 animated-flame" />
+                ) : null}
+                {currentStreak} days
+            </div>
             <p className="text-xs text-muted-foreground">Keep the flame alive!</p>
           </CardContent>
         </Card>
@@ -103,7 +108,12 @@ export function StreakCalendar({ entries }: { entries: JournalEntry[]; }) {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{longestStreak} days</div>
+            <div className="text-2xl font-bold flex items-center">
+                {longestStreak > 0 ? (
+                    <Star className="mr-2 h-6 w-6 animated-star" />
+                ) : null}
+                {longestStreak} days
+            </div>
             <p className="text-xs text-muted-foreground">Your personal best.</p>
           </CardContent>
         </Card>

@@ -159,3 +159,41 @@
 .holographic-icon {
   animation: holographic 5s linear infinite;
 }
+
+@keyframes flicker {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+    text-shadow:
+      0 0 4px #fff,
+      0 0 11px #fff,
+      0 0 19px #fff,
+      0 0 40px hsl(var(--primary)),
+      0 0 80px hsl(var(--primary)),
+      0 0 90px hsl(var(--primary)),
+      0 0 100px hsl(var(--primary)),
+      0 0 150px hsl(var(--primary));
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+.animated-flame {
+  animation: flicker 1.5s infinite alternate;
+  color: hsl(var(--primary));
+}
+
+@keyframes pulse-star {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.2);
+    filter: brightness(1.5);
+  }
+}
+
+.animated-star {
+  animation: pulse-star 2s ease-in-out infinite;
+  color: hsl(var(--primary));
+}
