@@ -1,27 +1,18 @@
 'use server';
 
 import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
   Timestamp,
-  serverTimestamp,
-  doc,
-  setDoc,
-  getDoc,
-  where,
-} from 'firebase/firestore';
+  FieldValue,
+} from 'firebase-admin/firestore';
 import { adminDb } from '@/lib/firebase-admin';
 import type { JournalEntry, DuolingoGrade } from '@/lib/types';
 
 
 // JOURNAL ACTIONS
 export async function getJournalEntries(userId: string): Promise<JournalEntry[]> {
-  const entriesCol = collection(adminDb, 'users', userId, 'journalEntries');
-  const q = query(entriesCol, orderBy('createdAt', 'desc'));
-  const snapshot = await getDocs(q);
+  const entriesCol = adminDb.collection('users').doc(userId).collection('journalEntries');
+  const q = entriesCol.orderBy('createdAt', 'desc');
+  const snapshot = await q.get();
   return snapshot.docs.map(doc => {
     const data = doc.data();
     return {
@@ -34,11 +25,11 @@ export async function getJournalEntries(userId: string): Promise<JournalEntry[]>
 }
 
 export async function addJournalEntry(userId: string, content: string, mood: string): Promise<JournalEntry> {
-    const entriesCol = collection(adminDb, 'users', userId, 'journalEntries');
-    const newDocRef = await addDoc(entriesCol, {
+    const entriesCol = adminDb.collection('users').doc(userId).collection('journalEntries');
+    const newDocRef = await entriesCol.add({
         content,
         mood,
-        createdAt: serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         userId,
     });
 
@@ -53,9 +44,9 @@ export async function addJournalEntry(userId: string, content: string, mood: str
 
 // STREAK ACTIONS
 export async function getDuolingoGrades(userId: string): Promise<DuolingoGrade[]> {
-  const gradesCol = collection(adminDb, 'users', userId, 'duolingoStreaks');
-  const q = query(gradesCol, orderBy('date', 'desc'));
-  const snapshot = await getDocs(q);
+  const gradesCol = adminDb.collection('users').doc(userId).collection('duolingoStreaks');
+  const q = gradesCol.orderBy('date', 'desc');
+  const snapshot = await q.get();
   return snapshot.docs.map(doc => {
     const data = doc.data();
     return {
@@ -67,7 +58,7 @@ export async function getDuolingoGrades(userId: string): Promise<DuolingoGrade[]
 }
 
 export async function addDuolingoGrade(userId: string, date: Date, grade: number): Promise<DuolingoGrade> {
-  const gradesCol = collection(adminDb, 'users', userId, 'duolingoStreaks');
+  const gradesCol = adminDb.collection('users').doc(userId).collection('duolingoStreaks');
   
   // Calculate streak
   const today = new Date();
@@ -75,8 +66,8 @@ export async function addDuolingoGrade(userId: string, date: Date, grade: number
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
   
-  const q = query(gradesCol, where("date", ">=", yesterday), orderBy("date", "desc"));
-  const recentGradesSnapshot = await getDocs(q);
+  const q = gradesCol.where("date", ">=", yesterday).orderBy("date", "desc");
+  const recentGradesSnapshot = await q.get();
   
   let currentStreak = 1;
   if (!recentGradesSnapshot.empty) {
@@ -93,7 +84,7 @@ export async function addDuolingoGrade(userId: string, date: Date, grade: number
     streakLength: currentStreak,
   };
 
-  const docRef = await addDoc(gradesCol, newGradeDoc);
+  const docRef = await gradesCol.add(newGradeDoc);
 
   return {
     id: docRef.id,
