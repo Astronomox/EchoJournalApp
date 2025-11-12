@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFirebase } from "@/firebase";
-import { addJournalEntry } from "@/lib/actions";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { JournalEditor } from "@/components/journal-editor";
 import { PageTransition } from "@/components/page-transition";
 import { useToast } from "@/components/ui/use-toast";
 import { analyzeEntrySentiment } from "@/ai/flows/analyze-entry-sentiment";
 
 export default function NewJournalEntryPage() {
-  const { user } = useFirebase();
+  const { user, firestore } = useFirebase();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -29,7 +29,14 @@ export default function NewJournalEntryPage() {
       const sentimentResult = await analyzeEntrySentiment({ journalEntry: content });
       const mood = sentimentResult.sentiment.charAt(0).toUpperCase() + sentimentResult.sentiment.slice(1);
       
-      await addJournalEntry(user.uid, content, mood, sentimentResult.score);
+      const entriesCol = collection(firestore, 'users', user.uid, 'journalEntries');
+      await addDoc(entriesCol, {
+        content,
+        mood,
+        sentimentScore: sentimentResult.score,
+        createdAt: serverTimestamp(),
+        userId: user.uid,
+      });
       
       toast({
         title: "Entry Saved",

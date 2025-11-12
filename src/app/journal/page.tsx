@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getJournalEntries } from "@/lib/actions";
+import { useMemo } from "react";
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { collection } from 'firebase/firestore';
 import type { JournalEntry } from "@/lib/types";
-import { useFirebase } from "@/firebase";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -12,19 +12,20 @@ import { PageTransition } from "@/components/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function JournalPage() {
-  const { user } = useFirebase();
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, firestore } = useFirebase();
 
-  useEffect(() => {
-    if (user) {
-      setLoading(true);
-      getJournalEntries(user.uid).then((data) => {
-        setEntries(data);
-        setLoading(false);
-      });
-    }
-  }, [user]);
+  const entriesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return collection(firestore, 'users', user.uid, 'journalEntries');
+  }, [user, firestore]);
+
+  const { data: entries, isLoading: loading } = useCollection<JournalEntry>(entriesQuery);
+
+  const sortedEntries = useMemo(() => {
+    if (!entries) return [];
+    // The useCollection hook doesn't sort, so we sort here
+    return [...entries].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [entries]);
 
   return (
     <PageTransition>
@@ -54,14 +55,14 @@ export default function JournalPage() {
           </Card>
         ))}
 
-        {!loading && entries.length === 0 && (
+        {!loading && (!sortedEntries || sortedEntries.length === 0) && (
           <div className="col-span-full text-center py-16">
             <h2 className="text-2xl font-semibold">Your journal is empty</h2>
             <p className="text-muted-foreground mt-2">Start writing to see your entries here.</p>
           </div>
         )}
         
-        {!loading && entries.map((entry) => (
+        {!loading && sortedEntries && sortedEntries.map((entry) => (
           <Card key={entry.id} className="glassmorphism hover:bg-card/80 transition-colors cursor-pointer">
             <CardHeader>
               <CardTitle className="text-lg">{new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(entry.createdAt))}</CardTitle>

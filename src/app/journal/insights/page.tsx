@@ -1,44 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useFirebase } from "@/firebase";
-import { getJournalEntries } from "@/lib/actions";
+import { useMemo } from "react";
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { collection } from 'firebase/firestore';
 import { generateMoodInsights } from "@/ai/flows/generate-mood-insights";
 import type { JournalEntry } from "@/lib/types";
 import { PageTransition } from "@/components/page-transition";
 import { MoodChart } from "@/components/mood-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, Loader2 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 
 export default function InsightsPage() {
-  const { user } = useFirebase();
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const { user, firestore } = useFirebase();
   const [insights, setInsights] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingInsights, setLoadingInsights] = useState(false);
+
+  const entriesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return collection(firestore, 'users', user.uid, 'journalEntries');
+  }, [user, firestore]);
+
+  const { data: entries, isLoading: loadingEntries } = useCollection<JournalEntry>(entriesQuery);
 
   useEffect(() => {
-    async function fetchData() {
-      if (!user) return;
-      setLoading(true);
+    async function fetchInsights() {
+      if (!entries || entries.length < 2) {
+        setInsights(null);
+        return;
+      };
+      setLoadingInsights(true);
       try {
-        const fetchedEntries = await getJournalEntries(user.uid);
-        setEntries(fetchedEntries);
-
-        if (fetchedEntries.length > 1) {
-            const allEntriesContent = fetchedEntries.map(e => `Date: ${e.createdAt.toISOString().split('T')[0]}\n${e.content}`).join('\n\n---\n\n');
-            const moodInsightsResult = await generateMoodInsights({ journalEntries: allEntriesContent });
-            setInsights(moodInsightsResult.moodInsights);
-        }
+        const allEntriesContent = entries.map(e => `Date: ${new Date(e.createdAt).toISOString().split('T')[0]}\n${e.content}`).join('\n\n---\n\n');
+        const moodInsightsResult = await generateMoodInsights({ journalEntries: allEntriesContent });
+        setInsights(moodInsightsResult.moodInsights);
       } catch (error) {
         console.error("Failed to fetch insights:", error);
         setInsights("Could not load AI insights at this time.");
       } finally {
-        setLoading(false);
+        setLoadingInsights(false);
       }
     }
-    fetchData();
-  }, [user]);
+    fetchInsights();
+  }, [entries]);
+
+  const loading = loadingEntries || loadingInsights;
 
   return (
     <PageTransition>
@@ -50,7 +57,7 @@ export default function InsightsPage() {
       </div>
       <div className="grid gap-6 mt-4 md:grid-cols-2">
         <div className="md:col-span-2">
-          {loading ? <Skeleton className="h-[350px] w-full" /> : <MoodChart entries={entries} />}
+          {loadingEntries ? <Skeleton className="h-[350px] w-full" /> : <MoodChart entries={entries || []} />}
         </div>
         
         <Card className="md:col-span-2 glassmorphism">

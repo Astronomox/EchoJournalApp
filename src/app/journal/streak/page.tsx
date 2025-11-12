@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useFirebase } from "@/firebase";
-import { getDuolingoGrades, addDuolingoGrade } from "@/lib/actions";
+import { useEffect, useState, useMemo } from "react";
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { DuolingoGrade } from "@/lib/types";
 import { PageTransition } from "@/components/page-transition";
 import { StreakCalendar } from "@/components/streak-calendar";
@@ -13,29 +13,24 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { CalendarCheck, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import {isSameDay} from 'date-fns'
+import {isSameDay, subDays} from 'date-fns'
 
 export default function StreakPage() {
-  const { user } = useFirebase();
+  const { user, firestore } = useFirebase();
   const { toast } = useToast();
-  const [grades, setGrades] = useState<DuolingoGrade[]>([]);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [gradeInput, setGradeInput] = useState("");
 
-  const alreadyGraded = selectedDate ? grades.some(g => isSameDay(g.date, selectedDate)) : false;
+  const gradesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return collection(firestore, 'users', user.uid, 'duolingoStreaks');
+  }, [user, firestore]);
 
-  useEffect(() => {
-    if (user) {
-      setLoading(true);
-      getDuolingoGrades(user.uid).then((data) => {
-        const gradesWithDates = data.map(g => ({ ...g, date: new Date(g.date) }));
-        setGrades(gradesWithDates);
-        setLoading(false);
-      });
-    }
-  }, [user]);
+  const { data: grades, isLoading: loading } = useCollection<DuolingoGrade>(gradesQuery);
+  const gradesWithDates = useMemo(() => grades?.map(g => ({ ...g, date: new Date(g.date) })) || [], [grades]);
+  
+  const alreadyGraded = selectedDate ? gradesWithDates.some(g => isSameDay(g.date, selectedDate)) : false;
 
   const handleAddGrade = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,12 +44,32 @@ export default function StreakPage() {
     
     setSubmitting(true);
     try {
-      const newGradeData = await addDuolingoGrade(user.uid, selectedDate, gradeValue);
-      const newGrade = { ...newGradeData, date: new Date(newGradeData.date) };
-      setGrades(prev => [...prev, newGrade].sort((a,b) => b.date.getTime() - a.date.getTime()));
+      const gradesCol = collection(firestore, 'users', user.uid, 'duolingoStreaks');
+      
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const yesterday = subDays(today, 1);
+      
+      let currentStreak = 1;
+      const sortedGrades = [...gradesWithDates].sort((a,b) => b.date.getTime() - a.date.getTime());
+      const lastGrade = sortedGrades[0];
+
+      if (lastGrade && isSameDay(lastGrade.date, yesterday)) {
+          // @ts-ignore
+          currentStreak = (lastGrade.streakLength || 0) + 1;
+      }
+      
+      await addDoc(gradesCol, {
+          userId: user.uid,
+          date: selectedDate,
+          grade: gradeValue,
+          streakLength: currentStreak,
+      });
+
       setGradeInput("");
       toast({ title: "Grade Added!", description: `Your grade for ${selectedDate.toLocaleDateString()} has been saved.` });
     } catch (error) {
+      console.error(error);
       toast({ variant: "destructive", title: "Error", description: "Could not save your grade. Please try again." });
     } finally {
       setSubmitting(false);
@@ -70,7 +85,7 @@ export default function StreakPage() {
         </h1>
       </div>
       <div className="grid gap-6 mt-4">
-        {loading ? <Skeleton className="w-full h-80" /> : <StreakCalendar grades={grades} onDateSelect={setSelectedDate} />}
+        {loading ? <Skeleton className="w-full h-80" /> : <StreakCalendar grades={gradesWithDates} onDateSelect={setSelectedDate} />}
         
         <Card className="glassmorphism">
           <CardHeader>

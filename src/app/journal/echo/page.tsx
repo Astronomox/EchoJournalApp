@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useFirebase } from "@/firebase";
-import { getJournalEntries } from "@/lib/actions";
+import { useState, useMemo } from "react";
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { collection } from 'firebase/firestore';
+import type { JournalEntry } from "@/lib/types";
 import { identifyThematicConnections } from "@/ai/flows/identify-thematic-connections";
 import { PageTransition } from "@/components/page-transition";
 import { Button } from "@/components/ui/button";
@@ -11,18 +12,24 @@ import { BotMessageSquare, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EchoPage() {
-  const { user } = useFirebase();
+  const { user, firestore } = useFirebase();
   const [themes, setThemes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const entriesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return collection(firestore, 'users', user.uid, 'journalEntries');
+  }, [user, firestore]);
+
+  const { data: entries, isLoading: entriesLoading } = useCollection<JournalEntry>(entriesQuery);
+
   const handleAnalyze = async () => {
-    if (!user) return;
+    if (!user || !entries) return;
     setLoading(true);
     setError(null);
     setThemes([]);
     try {
-      const entries = await getJournalEntries(user.uid);
       if (entries.length < 2) {
         setError("You need at least two journal entries for Echo mode to find connections.");
         setLoading(false);
@@ -56,7 +63,7 @@ export default function EchoPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
-            <Button onClick={handleAnalyze} disabled={loading}>
+            <Button onClick={handleAnalyze} disabled={loading || entriesLoading}>
                 <Sparkles className="mr-2 h-4 w-4" />
                 {loading ? 'Analyzing...' : 'Analyze My Journal'}
             </Button>
