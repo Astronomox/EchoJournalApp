@@ -13,17 +13,13 @@ import {
   getDoc,
   where,
 } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase/index';
+import { adminDb } from '@/lib/firebase-admin';
 import type { JournalEntry, DuolingoGrade } from '@/lib/types';
 
-async function getDb() {
-  return (await initializeFirebase()).firestore;
-}
 
 // JOURNAL ACTIONS
 export async function getJournalEntries(userId: string): Promise<JournalEntry[]> {
-  const db = await getDb();
-  const entriesCol = collection(db, 'users', userId, 'journalEntries');
+  const entriesCol = collection(adminDb, 'users', userId, 'journalEntries');
   const q = query(entriesCol, orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => {
@@ -38,8 +34,7 @@ export async function getJournalEntries(userId: string): Promise<JournalEntry[]>
 }
 
 export async function addJournalEntry(userId: string, content: string, mood: string): Promise<JournalEntry> {
-    const db = await getDb();
-    const entriesCol = collection(db, 'users', userId, 'journalEntries');
+    const entriesCol = collection(adminDb, 'users', userId, 'journalEntries');
     const newDocRef = await addDoc(entriesCol, {
         content,
         mood,
@@ -58,8 +53,7 @@ export async function addJournalEntry(userId: string, content: string, mood: str
 
 // STREAK ACTIONS
 export async function getDuolingoGrades(userId: string): Promise<DuolingoGrade[]> {
-  const db = await getDb();
-  const gradesCol = collection(db, 'users', userId, 'duolingoStreaks');
+  const gradesCol = collection(adminDb, 'users', userId, 'duolingoStreaks');
   const q = query(gradesCol, orderBy('date', 'desc'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => {
@@ -73,8 +67,7 @@ export async function getDuolingoGrades(userId: string): Promise<DuolingoGrade[]
 }
 
 export async function addDuolingoGrade(userId: string, date: Date, grade: number): Promise<DuolingoGrade> {
-  const db = await getDb();
-  const gradesCol = collection(db, 'users', userId, 'duolingoStreaks');
+  const gradesCol = collection(adminDb, 'users', userId, 'duolingoStreaks');
   
   // Calculate streak
   const today = new Date();
