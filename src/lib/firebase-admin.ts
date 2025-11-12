@@ -1,5 +1,3 @@
-'use server';
-
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { firebaseConfig } from '@/firebase/config';
@@ -32,7 +30,7 @@ let adminDb: Firestore;
 if (!adminApp && serviceAccount) {
     adminApp = initializeApp({
         credential: cert(serviceAccount),
-        databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`,
+        databaseURL: `https:///${firebaseConfig.projectId}.firebaseio.com`,
     }, 'firebase-admin-app');
 }
 
