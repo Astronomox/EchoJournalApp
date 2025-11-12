@@ -102,42 +102,6 @@
         "theme",
         "strength"
       ]
-    },
-    "DuolingoStreak": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "DuolingoStreak",
-      "type": "object",
-      "description": "Represents a user's Duolingo streak record.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Duolingo streak record."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N DuolingoStreak)"
-        },
-        "date": {
-          "type": "string",
-          "description": "Date for the streak record.",
-          "format": "date-time"
-        },
-        "grade": {
-          "type": "number",
-          "description": "The Duolingo grade or score for the day."
-        },
-        "streakLength": {
-          "type": "number",
-          "description": "Length of the user's Duolingo streak on that date."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "date",
-        "grade",
-        "streakLength"
-      ]
     }
   },
   "auth": {
@@ -203,28 +167,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/users/{userId}/duolingoStreaks/{duolingoStreakId}",
-        "definition": {
-          "entityName": "DuolingoStreak",
-          "schema": {
-            "$ref": "#/backend/entities/DuolingoStreak"
-          },
-          "description": "Stores Duolingo streak data for each user. Path-based ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Authentication UID of the user."
-            },
-            {
-              "name": "duolingoStreakId",
-              "description": "The unique identifier of the Duolingo streak."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to ensure security, scalability, and ease of debugging, adhering to the core design principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters). It leverages structural segregation and denormalization to optimize rule complexity.\n\n**Authorization Independence:** Authorization Independence is achieved by using path-based ownership for user-specific data. `JournalEntry`, `ThematicConnection`, and `DuolingoStreak` are subcollections under `/users/{userId}`, ensuring that access control can be enforced using simple path-based rules (e.g., `request.auth.uid == userId`). No `get()` calls are needed to validate ownership, allowing for atomic operations.\n\n**Structural Segregation:** All collections are structurally segregated based on ownership.  Each user's data (`JournalEntry`, `ThematicConnection`, `DuolingoStreak`) resides under their respective user document, ensuring homogenous security posture within each collection. This eliminates the need for complex rule logic based on document content within a collection.\n\n**Access Modeling:** The structure uses path-based ownership for private user data, where each user has full access to their own journal entries, thematic connections, and Duolingo streaks. This is represented through the hierarchical path structure `/users/{userId}/journalEntries/{journalEntryId}`, etc.\n\n**QAPs (Rules are not Filters):** Because all entities related to a user are nested beneath the `/users/{userId}` path, listing operations are inherently scoped to the requesting user. Rules can simply check `request.auth.uid == userId` to allow listing entries, ensuring that rules are not used as filters and preventing unauthorized data access."
+    "reasoning": "The Firestore data structure is designed to ensure security, scalability, and ease of debugging, adhering to the core design principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters). It leverages structural segregation and denormalization to optimize rule complexity.\n\n**Authorization Independence:** Authorization Independence is achieved by using path-based ownership for user-specific data. `JournalEntry` and `ThematicConnection` are subcollections under `/users/{userId}`, ensuring that access control can be enforced using simple path-based rules (e.g., `request.auth.uid == userId`). No `get()` calls are needed to validate ownership, allowing for atomic operations.\n\n**Structural Segregation:** All collections are structurally segregated based on ownership.  Each user's data (`JournalEntry`, `ThematicConnection`) resides under their respective user document, ensuring homogenous security posture within each collection. This eliminates the need for complex rule logic based on document content within a collection.\n\n**Access Modeling:** The structure uses path-based ownership for private user data, where each user has full access to their own journal entries and thematic connections. This is represented through the hierarchical path structure `/users/{userId}/journalEntries/{journalEntryId}`, etc.\n\n**QAPs (Rules are not Filters):** Because all entities related to a user are nested beneath the `/users/{userId}` path, listing operations are inherently scoped to the requesting user. Rules can simply check `request.auth.uid == userId` to allow listing entries, ensuring that rules are not used as filters and preventing unauthorized data access."
   }
 }

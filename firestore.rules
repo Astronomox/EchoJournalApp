@@ -2,8 +2,8 @@
  * @fileoverview Firestore Security Rules for EchoJournal.
  *
  * Core Philosophy: This ruleset enforces a strict user-ownership model. Each user
- * has complete control over their data (profile, journal entries, thematic connections,
- * and Duolingo streaks).  Data is organized under the /users/{userId} path to
+ * has complete control over their data (profile, journal entries, thematic connections).
+ * Data is organized under the /users/{userId} path to
  * simplify authorization and eliminate the need for complex queries in the rules.
  *
  * Data Structure:
@@ -13,8 +13,6 @@
  *   created by the user. 'userId' in the path must match the entry's userId.
  * - /users/{userId}/thematicConnections/{thematicConnectionId}: Stores thematic
  *   connections between journal entries. 'userId' must match the connection's userId.
- * - /users/{userId}/duolingoStreaks/{duolingoStreakId}: Stores Duolingo streak
- *   data. 'userId' must match the streak record's userId.
  *
  * Key Security Decisions:
  * - Users can only access their own data. No cross-user access is allowed.
@@ -116,38 +114,6 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes, restricts listing to the owner.
      */
     match /users/{userId}/thematicConnections/{thematicConnectionId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Controls access to Duolingo streaks for a specific user.
-     * @path /users/{userId}/duolingoStreaks/{duolingoStreakId}
-     * @allow (create) - Authenticated user can create a Duolingo streak under their userId.
-     * @allow (get) - Authenticated user can read their own Duolingo streak.
-     * @allow (update) - Authenticated user can update their own Duolingo streak.
-     * @allow (delete) - Authenticated user can delete their own Duolingo streak.
-     * @deny (create) - Creation is denied if the user is not authenticated or the userId does not match their auth UID.
-     * @deny (update) - Update is denied if the user is not authenticated or the userId does not match their auth UID.
-     * @deny (delete) - Delete is denied if the user is not authenticated or the userId does not match their auth UID.
-     * @principle Enforces document ownership for writes, restricts listing to the owner.
-     */
-    match /users/{userId}/duolingoStreaks/{duolingoStreakId} {
       function isSignedIn() {
         return request.auth != null;
       }
