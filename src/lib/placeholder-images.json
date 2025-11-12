@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-image",
+      "description": "Abstract swirling colors representing thoughts and emotions.",
+      "imageUrl": "https://images.unsplash.com/photo-1759184966965-34ee0ada3162?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhYnN0cmFjdCUyMHN3aXJsc3xlbnwwfHx8fDE3NjI5MzkzNjl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract swirls"
+    },
+    {
+      "id": "feature-voice",
+      "description": "A sound wave visualization.",
+      "imageUrl": "https://images.unsplash.com/photo-1686519093104-3140c6dcf284?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzb3VuZCUyMHdhdmV8ZW58MHx8fHwxNzYyODg5NDU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sound wave"
+    },
+    {
+      "id": "feature-echo",
+      "description": "Connecting lines and dots forming a network.",
+      "imageUrl": "https://images.unsplash.com/photo-1544201183-3ee5c8377288?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxuZXR3b3JrJTIwY29ubmVjdGlvbnxlbnwwfHx8fDE3NjI4NzUzMjl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "network connection"
+    },
+    {
+      "id": "feature-insights",
+      "description": "A colorful chart showing positive growth.",
+      "imageUrl": "https://images.unsplash.com/photo-1591696205602-2f950c417cb9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkYXRhJTIwY2hhcnR8ZW58MHx8fHwxNzYyODY3NDIxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "data chart"
+    }
+  ]
 }
