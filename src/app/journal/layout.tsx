@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { NotebookText, BotMessageSquare, BarChart3, CalendarCheck, Settings, LogOut, Plus, Menu } from 'lucide-react';
 import { HolographicIcon } from '@/components/holographic-icon';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { signOut } from 'firebase/auth';
 
 const navItems = [
@@ -101,12 +101,14 @@ export default function JournalLayout({ children }: { children: React.ReactNode 
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
-               <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                  <Link href="/journal" className="flex items-center gap-2 font-semibold" onClick={() => setSidebarOpen(false)}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="currentColor"/><path d="M12 7C9.24 7 7 9.24 7 12C7 12.55 7.45 13 8 13C8.55 13 9 12.55 9 12C9 10.34 10.34 9 12 9C13.66 9 15 10.34 15 12C15 12.55 15.45 13 16 13C16.55 13 17 12.55 17 12C17 9.24 14.76 7 12 7Z" fill="currentColor"/></svg>
-                    <span>EchoJournal</span>
-                  </Link>
-                </div>
+               <SheetHeader className="h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 flex flex-row">
+                  <SheetTitle>
+                    <Link href="/journal" className="flex items-center gap-2 font-semibold" onClick={() => setSidebarOpen(false)}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="currentColor"/><path d="M12 7C9.24 7 7 9.24 7 12C7 12.55 7.45 13 8 13C8.55 13 9 12.55 9 12C9 10.34 10.34 9 12 9C13.66 9 15 10.34 15 12C15 12.55 15.45 13 16 13C16.55 13 17 12.55 17 12C17 9.24 14.76 7 12 7Z" fill="currentColor"/></svg>
+                      <span>EchoJournal</span>
+                    </Link>
+                  </SheetTitle>
+                </SheetHeader>
                 <div onClick={() => setSidebarOpen(false)}>
                   <NavContent />
                 </div>
@@ -166,3 +168,5 @@ export default function JournalLayout({ children }: { children: React.ReactNode 
     </div>
   );
 }
+
+    
