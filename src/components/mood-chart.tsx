@@ -19,9 +19,9 @@ import {
 export function MoodChart({ entries }: { entries: JournalEntry[] }) {
   const chartData = entries
     .slice() // Create a shallow copy to avoid mutating the original array
-    .reverse() // Reverse to have the oldest entry first for chronological order
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) // Sort chronologically
     .map(entry => ({
-      date: new Date(entry.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: new Date(entry.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
       sentimentScore: entry.sentimentScore,
       mood: entry.mood
     }));
@@ -67,6 +67,15 @@ export function MoodChart({ entries }: { entries: JournalEntry[] }) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
+              // Only render a few labels to prevent clutter
+              interval="preserveStartEnd"
+              tickFormatter={(value, index) => {
+                // Display the first and last labels
+                if (index === 0 || index === chartData.length - 1) {
+                  return value.split(',')[0]; // Just show the date part
+                }
+                return '';
+              }}
             />
             <YAxis
                 domain={[-1, 1]}
@@ -84,6 +93,7 @@ export function MoodChart({ entries }: { entries: JournalEntry[] }) {
                         <span className="text-muted-foreground">Score: {(value as number).toFixed(2)}</span>
                     </div>
                   )}
+                  labelFormatter={(label) => label}
                   indicator="dot"
                 />
               }
