@@ -6,7 +6,7 @@ import { useFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { JournalEditor } from "@/components/journal-editor";
 import { PageTransition } from "@/components/page-transition";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { analyzeEntrySentiment } from "@/ai/flows/analyze-entry-sentiment";
 
 export default function NewJournalEntryPage() {

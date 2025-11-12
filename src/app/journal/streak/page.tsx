@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { CalendarCheck, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {isSameDay, subDays} from 'date-fns'
