@@ -7,12 +7,10 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 
 // IMPORTANT: Replace with your actual Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "your-api-key",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "your-auth-domain",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "your-project-id",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "your-storage-bucket",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "your-messaging-sender-id",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "your-app-id",
+  projectId: "studio-8547887129-a7efa",
+  appId: "1:320761023907:web:188a70e3c8f9d374ba5e16",
+  apiKey: "AIzaSyAPquaWkix6obmQrgSkfEyhGjSb0FIs8FA",
+  authDomain: "studio-8547887129-a7efa.firebaseapp.com",
 };
 
 // Initialize Firebase
