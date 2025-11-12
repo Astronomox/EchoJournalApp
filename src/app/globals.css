@@ -30,6 +30,13 @@
     --chart-3: 240 50% 65%;
     --chart-4: 280 70% 80%;
     --chart-5: 220 70% 70%;
+
+    --streak-warmup: 240 4% 50%; /* Grey */
+    --streak-ignited: 330 80% 70%; /* Pink */
+    --streak-burning: 0 85% 60%; /* Red */
+    --streak-inferno: 30 100% 55%; /* Orange */
+    --streak-supernova-1: 280 90% 75%; /* Purple */
+    --streak-supernova-2: 180 100% 50%; /* Cyan */
   }
 
   .dark {
@@ -58,6 +65,13 @@
     --chart-3: 240 50% 65%;
     --chart-4: 280 70% 80%;
     --chart-5: 220 70% 70%;
+
+    --streak-warmup: 240 4% 80%; /* Light Grey */
+    --streak-ignited: 330 80% 70%; /* Pink */
+    --streak-burning: 0 85% 60%; /* Red */
+    --streak-inferno: 30 100% 55%; /* Orange */
+    --streak-supernova-1: 280 90% 75%; /* Purple */
+    --streak-supernova-2: 180 100% 50%; /* Cyan */
   }
   
   .theme-dark-cosmos {
@@ -196,4 +210,48 @@
 .animated-star {
   animation: pulse-star 2s ease-in-out infinite;
   color: hsl(var(--primary));
+}
+
+/* --- STREAK FLAME ANIMATIONS --- */
+@keyframes crazy-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.5); opacity: 1; }
+}
+
+@keyframes supernova-burst {
+  0%, 100% { 
+    filter: hue-rotate(0deg) drop-shadow(0 0 2px hsl(var(--streak-supernova-1))) brightness(1.2);
+    color: hsl(var(--streak-supernova-1));
+  }
+  50% { 
+    filter: hue-rotate(180deg) drop-shadow(0 0 10px hsl(var(--streak-supernova-2))) brightness(1.8);
+    color: hsl(var(--streak-supernova-2));
+  }
+}
+
+.streak-flame {
+  animation-name: crazy-pulse;
+  animation-timing-function: ease-in-out;
+}
+
+.streak-flame-warmup { /* 1+ days */
+  color: hsl(var(--streak-warmup));
+  filter: drop-shadow(0 0 3px hsl(var(--streak-warmup) / 0.7));
+}
+.streak-flame-ignited { /* 7+ days */
+  color: hsl(var(--streak-ignited));
+  filter: drop-shadow(0 0 4px hsl(var(--streak-ignited) / 0.8));
+}
+.streak-flame-burning { /* 15+ days */
+  color: hsl(var(--streak-burning));
+  filter: drop-shadow(0 0 6px hsl(var(--streak-burning)));
+}
+.streak-flame-inferno { /* 30+ days */
+  color: hsl(var(--streak-inferno));
+  filter: drop-shadow(0 0 8px hsl(var(--streak-inferno)));
+}
+.streak-flame-supernova { /* 100+ days */
+  animation-name: crazy-pulse, supernova-burst;
+  animation-duration: 1.5s, 3s;
+  animation-timing-function: ease-in-out, linear;
 }

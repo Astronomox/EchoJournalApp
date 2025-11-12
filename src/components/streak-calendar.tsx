@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Flame, Star } from "lucide-react";
 import { differenceInCalendarDays, subDays, isSameDay } from 'date-fns';
 import { Timestamp } from "firebase/firestore";
+import { cn } from "@/lib/utils";
 
 const calculateStreaks = (entries: { date: Date }[]): { currentStreak: number, longestStreak: number } => {
     if (entries.length === 0) return { currentStreak: 0, longestStreak: 0 };
@@ -53,6 +54,34 @@ const calculateStreaks = (entries: { date: Date }[]): { currentStreak: number, l
     return { currentStreak, longestStreak };
 };
 
+const getStreakFlameProps = (streak: number): { className: string, style: React.CSSProperties } => {
+    let className = 'streak-flame';
+    let style: React.CSSProperties = {};
+
+    if (streak >= 100) {
+        className += ' streak-flame-supernova';
+    } else if (streak >= 30) {
+        className += ' streak-flame-inferno';
+    } else if (streak >= 15) {
+        className += ' streak-flame-burning';
+    } else if (streak >= 7) {
+        className += ' streak-flame-ignited';
+    } else if (streak > 0) {
+        className += ' streak-flame-warmup';
+    }
+
+    if (streak > 0) {
+        const animationDuration = Math.max(0.2, 2 - streak * 0.05);
+        style = {
+            animationDuration: `${animationDuration}s`,
+            animationIterationCount: 'infinite',
+        };
+    }
+    
+    return { className, style };
+};
+
+
 export function StreakCalendar({ entries }: { entries: JournalEntry[]; }) {
   
   const entryDates = entries.map(e => {
@@ -61,6 +90,7 @@ export function StreakCalendar({ entries }: { entries: JournalEntry[]; }) {
   });
   
   const { currentStreak, longestStreak } = calculateStreaks(entryDates);
+  const flameProps = getStreakFlameProps(currentStreak);
 
   const modifiers = {
     journaled: entryDates.map(e => e.date)
@@ -87,7 +117,7 @@ export function StreakCalendar({ entries }: { entries: JournalEntry[]; }) {
         </CardContent>
       </Card>
       <div className="space-y-6">
-        <Card className="glassmorphism">
+        <Card className="glassmorphism overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
             <Flame className="h-4 w-4 text-muted-foreground" />
@@ -95,7 +125,7 @@ export function StreakCalendar({ entries }: { entries: JournalEntry[]; }) {
           <CardContent>
             <div className="text-2xl font-bold flex items-center">
                 {currentStreak > 0 ? (
-                    <Flame className="mr-2 h-6 w-6 animated-flame" />
+                     <Flame {...flameProps} className={cn("mr-2 h-6 w-6", flameProps.className)} />
                 ) : null}
                 {currentStreak} days
             </div>
