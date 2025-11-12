@@ -83,12 +83,12 @@ export default function InsightsPage() {
           Mood Insights
         </h1>
       </div>
-      <div className="grid gap-6 mt-4 md:grid-cols-2">
-        <div className="md:col-span-2">
+      <div className="grid gap-6 mt-4 md:grid-cols-1">
+        <div className="md:col-span-1">
           {loadingEntries ? <Skeleton className="h-[350px] w-full" /> : <MoodChart entries={entriesWithDates || []} />}
         </div>
         
-        <Card className="md:col-span-2 glassmorphism">
+        <Card className="md:col-span-1 glassmorphism">
           <CardHeader>
             <CardTitle>AI-Powered Summary</CardTitle>
             <CardDescription>
@@ -121,4 +121,3 @@ export default function InsightsPage() {
     </PageTransition>
   );
 }
-
