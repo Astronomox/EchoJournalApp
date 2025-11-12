@@ -18,12 +18,13 @@ import {
 
 export function MoodChart({ entries }: { entries: JournalEntry[] }) {
   const chartData = entries
+    .slice() // Create a shallow copy to avoid mutating the original array
+    .reverse() // Reverse to have the oldest entry first for chronological order
     .map(entry => ({
       date: new Date(entry.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       sentimentScore: entry.sentimentScore,
       mood: entry.mood
-    }))
-    .reverse();
+    }));
 
   const chartConfig = {
     sentiment: {
